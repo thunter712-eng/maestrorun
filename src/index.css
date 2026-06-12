@@ -561,3 +561,68 @@ body {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* ----------------------------------------------------------------------------
+ * Touch devices (phones/tablets): go edge-to-edge. Drop the desktop poster
+ * frame and fill the screen with the largest possible 16:9 stage. (Portrait is
+ * intercepted by the rotate gate, so this effectively means landscape.)
+ * -------------------------------------------------------------------------- */
+@media (pointer: coarse) {
+  .app-shell {
+    padding: 0;
+    gap: 0;
+  }
+
+  .byline {
+    display: none; /* no room for the caption when we're full-bleed */
+  }
+
+  /* Largest 16:9 rectangle that fits the viewport, no decorative chrome.
+     Height-limited on tall phones → fills top-to-bottom with slim side bars
+     (cropping width instead would cut off the ground/player, so we letterbox). */
+  .poster-frame {
+    width: min(100vw, calc(100dvh * 16 / 9));
+    max-width: none;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .poster-frame::after {
+    display: none; /* hide the inner art-deco keyline */
+  }
+
+  .stage {
+    border-radius: 0;
+  }
+
+  /* Game-over content can be taller than a short landscape screen (and shorter
+     still once the keyboard opens for initials). Let the overlay scroll, keep
+     its top reachable instead of clipped, and allow vertical touch-scroll
+     despite the stage's touch-action: none. */
+  .overlay {
+    justify-content: safe center;
+    overflow-y: auto;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+    padding: 5% 6%;
+  }
+
+  /* Shrink the biggest vertical space-hogs so the initials input + submit
+     button fit above the on-screen keyboard. Sized by viewport HEIGHT. */
+  .final-score {
+    font-size: clamp(28px, 13vh, 70px);
+  }
+
+  .initials-input {
+    font-size: clamp(30px, 12vh, 60px);
+    width: clamp(120px, 36vh, 200px);
+  }
+
+  .entry-label,
+  .hi-line {
+    margin-top: 0.5em;
+  }
+}
