@@ -32,6 +32,68 @@ body {
   overflow-x: hidden;
 }
 
+/* ---- Portrait gate (phones): nudge the player into landscape ---- */
+.rotate-gate {
+  display: none;
+}
+
+/* Only touch devices in portrait — never desktop windows that happen to be tall. */
+@media (orientation: portrait) and (pointer: coarse) {
+  .app-shell {
+    display: none; /* pause the game/touches until rotated */
+  }
+
+  .rotate-gate {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.9em;
+    padding: 12vw;
+    background:
+      radial-gradient(1200px 700px at 50% -10%, #1a2350 0%, transparent 60%),
+      var(--navy-deep);
+  }
+
+  .rotate-phone {
+    font-size: clamp(64px, 22vw, 120px);
+    line-height: 1;
+    color: var(--gold);
+    animation: rotateNudge 2s ease-in-out infinite;
+  }
+
+  .rotate-kicker {
+    font-family: 'Bodoni Moda', serif;
+    text-transform: uppercase;
+    letter-spacing: 0.42em;
+    padding-left: 0.42em;
+    font-size: clamp(10px, 3.4vw, 14px);
+    color: var(--gold);
+  }
+
+  .rotate-msg {
+    font-family: 'Bodoni Moda', serif;
+    font-weight: 800;
+    font-size: clamp(22px, 7vw, 34px);
+    line-height: 1.1;
+    color: var(--cream);
+    max-width: 16ch;
+  }
+}
+
+@keyframes rotateNudge {
+  0%, 45% {
+    transform: rotate(0deg);
+  }
+  70%, 100% {
+    transform: rotate(-90deg);
+  }
+}
+
 .app-shell {
   min-height: 100dvh;
   display: flex;
