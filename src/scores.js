@@ -18,8 +18,8 @@ const LAST_INITIALS_KEY = 'maestro-run-initials'
 export const MAX_ENTRIES = 10
 
 // --- flip these when you publish ---
-const USE_REMOTE = false
-const REMOTE_URL = '' // e.g. 'https://script.google.com/macros/s/AKfy.../exec'
+const USE_REMOTE = true
+const REMOTE_URL = 'https://script.google.com/macros/s/AKfycbwpGBK3PDQARmsyE8dzNRFHdMp3p2dyRNdzLe_bu1AHs8uCjP_tIQi_U-tQqvhbtmv4/exec'
 
 /* ------------------------------ profanity guard ---------------------------- */
 // Initials are A–Z only and at most 3 chars, so a substring match is enough.
