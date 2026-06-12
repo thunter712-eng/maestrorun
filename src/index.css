@@ -18,9 +18,16 @@
 html,
 body {
   height: 100%;
+  /* Lock the whole page: no scroll, no iOS rubber-band overscroll. The game
+     owns every gesture; swipes must reach the canvas, not pan the page. */
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 body {
+  position: fixed;
+  inset: 0;
+  width: 100%;
   font-family: 'Spectral', Georgia, serif;
   background:
     radial-gradient(1200px 700px at 50% -10%, #1a2350 0%, transparent 60%),
@@ -29,7 +36,6 @@ body {
   color: var(--cream);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  overflow-x: hidden;
 }
 
 /* ---- Portrait gate (phones): nudge the player into landscape ---- */
@@ -95,7 +101,8 @@ body {
 }
 
 .app-shell {
-  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -108,7 +115,10 @@ body {
 .poster-frame {
   position: relative;
   width: 100%;
-  max-width: 960px;
+  /* Cap by viewport HEIGHT too, so the 16:9 stage never overflows a short
+     landscape phone (which would reintroduce page scroll). ~84px reserves
+     room for the frame padding, gap, and byline. */
+  max-width: min(960px, calc((100dvh - 84px) * 16 / 9));
   border-radius: 14px;
   padding: clamp(7px, 1.4vw, 14px);
   background:
@@ -148,7 +158,9 @@ body {
   border-radius: 8px;
   overflow: hidden;
   background: var(--navy-deep);
-  touch-action: manipulation;
+  /* Capture every touch gesture for gameplay — no scroll/zoom on swipe-down,
+     so the duck (swipe down) registers instead of panning the page. */
+  touch-action: none;
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
@@ -333,6 +345,10 @@ body {
   padding: 0;
   max-height: 46vh;
   overflow-y: auto;
+  /* Opt back into vertical touch-scroll — the .stage ancestor sets
+     touch-action: none, which would otherwise freeze this list on mobile. */
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
   animation: rise 0.5s 0.12s ease both;
 }
 
