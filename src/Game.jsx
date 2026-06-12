@@ -1737,6 +1737,9 @@ export default function Game() {
 
   const onMouseDown = (e) => {
     if (isControl(e.target)) return
+    // Ignore the emulated mouse event iOS fires right after a real tap, so a
+    // single touch doesn't trigger twice (touchstart already handled it).
+    if (performance.now() - (touchRef.current.t0 || 0) < 700) return
     e.preventDefault()
     handlePress()
   }
@@ -1744,11 +1747,15 @@ export default function Game() {
   const onTouchStart = (e) => {
     if (isControl(e.target)) return
     const t = e.touches[0]
-    touchRef.current = { x: t.clientX, y: t.clientY, handled: false }
+    touchRef.current = { x: t.clientX, y: t.clientY, t0: performance.now(), handled: false }
     if (phaseRef.current !== 'running') {
-      handlePress()
+      handlePress() // start / restart
       touchRef.current.handled = true
+      return
     }
+    // Running: jump on PRESS for zero latency. A deliberate down-swipe is
+    // caught in onTouchMove a few ms later and converted to a slide.
+    doJump()
   }
 
   const onTouchMove = (e) => {
@@ -1756,16 +1763,19 @@ export default function Game() {
     const t = e.touches[0]
     const dx = t.clientX - touchRef.current.x
     const dy = t.clientY - touchRef.current.y
-    if (dy > 26 && dy > Math.abs(dx)) {
+    // Quick downward swipe = slide. Undo the jump we just fired on touchstart
+    // if the player has barely left the ground, then duck.
+    const quick = performance.now() - touchRef.current.t0 < 160
+    if (quick && dy > 24 && dy > Math.abs(dx)) {
+      const g = gameRef.current
+      if (g && g.player.y > GROUND_Y - 90) {
+        g.player.y = GROUND_Y
+        g.player.vy = 0
+        g.player.onGround = true
+      }
       doSlide()
       touchRef.current.handled = true
     }
-  }
-
-  const onTouchEnd = (e) => {
-    if (isControl(e.target)) return
-    e.preventDefault()
-    if (phaseRef.current === 'running' && !touchRef.current.handled) doJump()
   }
 
   return (
@@ -1775,7 +1785,6 @@ export default function Game() {
       onMouseDown={onMouseDown}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
       role="application"
       aria-label="The Maestro's Run game"
     >
