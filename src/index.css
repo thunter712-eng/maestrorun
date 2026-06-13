@@ -341,10 +341,14 @@ body {
 .leaderboard {
   list-style: none;
   width: min(360px, 80%);
-  margin: 1.1em 0 0.2em;
+  margin: 0.7em 0 0.2em;
   padding: 0;
-  max-height: 46vh;
+  max-height: 38vh;
   overflow-y: auto;
+  /* Don't let the column flexbox squeeze this scroll area down to one row when
+     the game-over screen is tight (short landscape phones) — show the rows and
+     scroll INSIDE this box instead. */
+  flex-shrink: 0;
   /* Opt back into vertical touch-scroll — the .stage ancestor sets
      touch-action: none, which would otherwise freeze this list on mobile. */
   touch-action: pan-y;

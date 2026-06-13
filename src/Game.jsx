@@ -1994,7 +1994,9 @@ export default function Game() {
 
   /* ---- pointer / touch input on the stage ---- */
   const isControl = (target) =>
-    target && target.closest && target.closest('button, input, .entry, .mute-btn')
+    target &&
+    target.closest &&
+    target.closest('button, input, .entry, .mute-btn, .leaderboard')
 
   const onMouseDown = (e) => {
     if (isControl(e.target)) return
