@@ -64,6 +64,25 @@ const KINDS = {
   page: { value: 50, r: 22, color: '#f2d489' },
 }
 
+/* ------------------------------- Characters ------------------------------- */
+// Three playable characters. Whoever you DON'T pick becomes your "rivals" (the
+// runners coming at you). Each has a signature weapon on a short cooldown.
+// NOTE: the character id doubles as its image key in imagesRef.
+const CHARACTERS = {
+  john: { name: 'John', weapon: 'soccer', weaponName: 'Soccer kick', icon: '⚽' },
+  brent: { name: 'Brent', weapon: 'tennis', weaponName: 'Tennis serve', icon: '🎾' },
+  dan: { name: 'Dan', weapon: 'trombone', weaponName: 'Trombone whack', icon: '🎺' },
+}
+const CHARACTER_ORDER = ['john', 'brent', 'dan']
+const CHARACTER_KEY = 'maestro-character'
+// id -> sprite url (reuses the existing body art)
+const CHAR_IMG = { john: conductorUrl, brent: enemy1Url, dan: enemy2Url }
+
+const WEAPON_COOLDOWN = 1.0 // seconds between attacks
+const PROJECTILE_SPEED = 780 // px/s, kicked/served forward (screen space)
+const MELEE_RANGE = 156 // px in front the trombone can reach
+const SWING_TIME = 0.28 // trombone swing animation length
+
 const rand = (a, b) => a + Math.random() * (b - a)
 const pick = (arr) => arr[(Math.random() * arr.length) | 0]
 const clamp01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x)
@@ -557,6 +576,101 @@ function drawBeam(ctx, x, y, w, t, accent) {
   ctx.restore()
 }
 
+/* -------------------------------- Weapons --------------------------------- */
+function pentagon(ctx, cx, cy, r) {
+  ctx.beginPath()
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2 - Math.PI / 2
+    const px = cx + Math.cos(a) * r
+    const py = cy + Math.sin(a) * r
+    if (i) ctx.lineTo(px, py)
+    else ctx.moveTo(px, py)
+  }
+  ctx.closePath()
+  ctx.fill()
+}
+
+function drawSoccerBall(ctx, x, y, r, rot) {
+  ctx.save()
+  ctx.translate(x, y)
+  ctx.rotate(rot)
+  ctx.fillStyle = '#f6f6f2'
+  ctx.beginPath()
+  ctx.arc(0, 0, r, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = '#16181d'
+  pentagon(ctx, 0, 0, r * 0.42)
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2 - Math.PI / 2
+    pentagon(ctx, Math.cos(a) * r * 0.74, Math.sin(a) * r * 0.74, r * 0.2)
+  }
+  ctx.strokeStyle = 'rgba(0,0,0,0.25)'
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.arc(0, 0, r, 0, Math.PI * 2)
+  ctx.stroke()
+  ctx.restore()
+}
+
+function drawTennisBall(ctx, x, y, r, rot) {
+  ctx.save()
+  ctx.translate(x, y)
+  ctx.rotate(rot)
+  const g = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.2, 0, 0, r)
+  g.addColorStop(0, '#e8f36b')
+  g.addColorStop(1, '#b6d22a')
+  ctx.fillStyle = g
+  ctx.beginPath()
+  ctx.arc(0, 0, r, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.strokeStyle = '#f7fae8'
+  ctx.lineWidth = r * 0.18
+  ctx.lineCap = 'round'
+  ctx.beginPath()
+  ctx.arc(-r * 1.15, 0, r * 1.35, -0.7, 0.7)
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.arc(r * 1.15, 0, r * 1.35, Math.PI - 0.7, Math.PI + 0.7)
+  ctx.stroke()
+  ctx.restore()
+}
+
+// `prog` 0→1 over the swing (0 = wound up, ~0.5 = full extension forward).
+function drawTrombone(ctx, x, y, prog, scale = 1) {
+  ctx.save()
+  ctx.translate(x, y)
+  ctx.scale(scale, scale)
+  const swing = Math.sin(prog * Math.PI) // 0..1..0
+  ctx.rotate(-0.55 + swing * 0.6)
+  ctx.strokeStyle = '#e8b84b'
+  ctx.lineWidth = 6
+  ctx.lineCap = 'round'
+  ctx.shadowColor = 'rgba(232,184,75,0.6)'
+  ctx.shadowBlur = 10
+  const reach = 50 + swing * 16 // the slide extends on the whack
+  ctx.beginPath()
+  ctx.moveTo(0, 0)
+  ctx.lineTo(reach, 0)
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.moveTo(reach - 10, 0)
+  ctx.lineTo(reach - 10, 14)
+  ctx.lineTo(6, 14)
+  ctx.stroke()
+  ctx.shadowBlur = 0
+  ctx.fillStyle = '#f2d489'
+  ctx.beginPath()
+  ctx.ellipse(reach + 8, 0, 9, 14, 0, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.restore()
+}
+
+function drawWeaponSmall(ctx, weapon, x, y, t) {
+  if (weapon === 'soccer') drawSoccerBall(ctx, x, y, 10, t * 2)
+  else if (weapon === 'tennis') drawTennisBall(ctx, x, y, 9, t * 2)
+  else drawTrombone(ctx, x - 6, y, 0.5, 0.42)
+}
+
 /* ------------------------------- Particles -------------------------------- */
 function drawParticle(ctx, p) {
   const a = clamp01(p.life / p.life0)
@@ -600,6 +714,7 @@ export default function Game() {
   const [finalScore, setFinalScore] = useState(0)
   const [showHint, setShowHint] = useState(false)
   const [muted, setMuted] = useState(false)
+  const [character, setCharacter] = useState('john') // chosen playable character
 
   const [leaderboard, setLeaderboard] = useState([])
   const [entering, setEntering] = useState(false) // awaiting initials input
@@ -616,6 +731,8 @@ export default function Game() {
   const touchRef = useRef({ x: 0, y: 0, handled: false })
   const enteringRef = useRef(false)
   const boardRef = useRef([]) // latest fetched leaderboard
+  const characterRef = useRef('john') // mirror of `character` for the game loop
+  const actionBtnRef = useRef(null) // mobile attack button (for cooldown styling)
 
   const isTouch =
     typeof window !== 'undefined' &&
@@ -629,15 +746,22 @@ export default function Game() {
     setMuted(savedMute)
     audioRef.current.setMuted(savedMute)
 
+    const savedChar = localStorage.getItem(CHARACTER_KEY)
+    if (savedChar && CHARACTERS[savedChar]) {
+      characterRef.current = savedChar
+      setCharacter(savedChar)
+    }
+
     const load = (src) => {
       const im = new Image()
       im.src = src
       return im
     }
+    // image keys match character ids (john/brent/dan)
     imagesRef.current = {
-      conductor: load(conductorUrl),
-      enemy1: load(enemy1Url),
-      enemy2: load(enemy2Url),
+      john: load(conductorUrl),
+      brent: load(enemy1Url),
+      dan: load(enemy2Url),
     }
 
     // load the leaderboard (local now; remote once published)
@@ -681,6 +805,12 @@ export default function Game() {
       beams: [], // overhead banner beams to slide under
       particles: [],
       floats: [], // score popups
+      // weapons: the two characters you didn't pick are your rivals
+      rivals: CHARACTER_ORDER.filter((c) => c !== characterRef.current),
+      projectiles: [], // soccer / tennis balls in flight
+      weaponReadyAt: 0, // g.t at which you can attack again
+      meleeSwing: 0, // trombone swing animation timer
+      meleePending: false, // a melee whack to resolve this frame
       invincibleUntil: 0,
       spawnTimer: 0.6,
       enemyTimer: 1.8,
@@ -780,6 +910,45 @@ export default function Game() {
     }
   }
 
+  // Fire the chosen character's weapon (gated by a cooldown). Projectiles are
+  // pushed as data here; the update loop resolves their hits (and the melee).
+  function doAttack() {
+    const g = gameRef.current
+    if (!g || phaseRef.current !== 'running') return
+    if (g.t < g.weaponReadyAt) return
+    g.weaponReadyAt = g.t + WEAPON_COOLDOWN
+    const weapon = CHARACTERS[characterRef.current].weapon
+    const p = g.player
+    const curH = PLAYER_H * (1 - p.crouch * 0.5)
+    if (weapon === 'trombone') {
+      g.meleeSwing = SWING_TIME
+      g.meleePending = true
+      audioRef.current?.stomp()
+    } else {
+      g.projectiles.push({
+        kind: weapon,
+        x: p.x + 34,
+        y: p.y - curH * 0.5,
+        vx: PROJECTILE_SPEED,
+        rot: 0,
+        dead: false,
+      })
+      audioRef.current?.blip(50, false)
+    }
+  }
+
+  function chooseCharacter(id) {
+    if (!CHARACTERS[id]) return
+    characterRef.current = id
+    setCharacter(id)
+    try {
+      localStorage.setItem(CHARACTER_KEY, id)
+    } catch {
+      /* ignore */
+    }
+    audioRef.current?.unlock()
+  }
+
   // Unified jump/start handler.
   function handlePress() {
     const ph = phaseRef.current
@@ -809,6 +978,9 @@ export default function Game() {
       } else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
         e.preventDefault()
         if (phaseRef.current === 'running') doSlide()
+      } else if (e.code === 'KeyF' || e.code === 'KeyE') {
+        e.preventDefault()
+        if (phaseRef.current === 'running') doAttack()
       }
     }
     window.addEventListener('keydown', onKey)
@@ -959,7 +1131,8 @@ export default function Game() {
     }
 
     function spawnEnemy(g, extra) {
-      const which = Math.random() < 0.5 ? 'enemy1' : 'enemy2'
+      const pool = g.rivals && g.rivals.length ? g.rivals : ['brent', 'dan']
+      const which = pool[(Math.random() * pool.length) | 0]
       g.enemies.push({
         x: W + 60,
         feetY: GROUND_Y,
@@ -1304,6 +1477,40 @@ export default function Game() {
       g.enemies = g.enemies.filter((e) =>
         e.knocked ? e.alpha > 0 && e.feetY < H + 160 : e.x > -70
       )
+
+      // ---- weapons ----
+      if (g.meleeSwing > 0) g.meleeSwing = Math.max(0, g.meleeSwing - dt)
+      // trombone whack: knock any rival within reach in front of the player
+      if (g.meleePending) {
+        g.meleePending = false
+        for (const e of g.enemies) {
+          if (e.knocked) continue
+          const dxp = e.x - p.x
+          if (dxp > -16 && dxp < MELEE_RANGE && Math.abs(e.feetY - p.y) < 90) {
+            knockEnemy(g, e)
+          }
+        }
+      }
+      // projectiles (soccer / tennis) fly forward and knock the first rival hit
+      for (const pr of g.projectiles) {
+        pr.x += pr.vx * dt
+        pr.rot += dt * 16
+        if (pr.dead) continue
+        for (const e of g.enemies) {
+          if (e.knocked) continue
+          if (
+            pr.x > e.x - 36 &&
+            pr.x < e.x + 36 &&
+            pr.y > e.feetY - ENEMY_H &&
+            pr.y < e.feetY - 16
+          ) {
+            knockEnemy(g, e)
+            pr.dead = true
+            break
+          }
+        }
+      }
+      g.projectiles = g.projectiles.filter((pr) => !pr.dead && pr.x < W + 80)
 
       // ---- particles ----
       for (const pt of g.particles) {
@@ -1658,6 +1865,12 @@ export default function Game() {
         ctx.restore()
       }
 
+      // projectiles in flight (behind the player)
+      for (const pr of g.projectiles) {
+        if (pr.kind === 'soccer') drawSoccerBall(ctx, pr.x, pr.y, 14, pr.rot)
+        else drawTennisBall(ctx, pr.x, pr.y, 12, pr.rot)
+      }
+
       // player
       const p = g.player
       const invincible = g.t < g.invincibleUntil
@@ -1665,7 +1878,7 @@ export default function Game() {
       const bobP = air ? 0 : -Math.abs(Math.sin(p.runPhase)) * 5
       const leanP = (air ? 0.07 : Math.sin(p.runPhase) * 0.05) + p.crouch * 0.32
       drawSprite(ctx, {
-        img: imgs.conductor,
+        img: imgs[characterRef.current],
         x: p.x,
         feetY: p.y,
         h: PLAYER_H,
@@ -1676,6 +1889,12 @@ export default function Game() {
         glow: invincible,
         invinciblePulse: g.t,
       })
+
+      // trombone swing in front of the player while whacking
+      if (CHARACTERS[characterRef.current].weapon === 'trombone' && g.meleeSwing > 0) {
+        const curH = PLAYER_H * (1 - p.crouch * 0.5)
+        drawTrombone(ctx, p.x + 26, p.y - curH * 0.52 + bobP, 1 - g.meleeSwing / SWING_TIME)
+      }
 
       // foreground sparks/dust/trail
       for (const pt of g.particles) {
@@ -1698,6 +1917,37 @@ export default function Game() {
       }
 
       drawHUD(ctx, g, act)
+
+      // weapon cooldown feedback: dim the mobile button, or draw a laptop gauge
+      const wReady = g.t >= g.weaponReadyAt
+      const wFrac = wReady ? 1 : clamp01(1 - (g.weaponReadyAt - g.t) / WEAPON_COOLDOWN)
+      if (isTouch) {
+        if (actionBtnRef.current) actionBtnRef.current.style.opacity = wReady ? '1' : '0.4'
+      } else {
+        const gx = 42
+        const gy = H - 44
+        ctx.save()
+        ctx.globalAlpha = wReady ? 1 : 0.7
+        ctx.beginPath()
+        ctx.arc(gx, gy, 21, 0, Math.PI * 2)
+        ctx.fillStyle = 'rgba(13,19,48,0.55)'
+        ctx.fill()
+        ctx.strokeStyle = 'rgba(245,236,216,0.22)'
+        ctx.lineWidth = 3
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.arc(gx, gy, 21, -Math.PI / 2, -Math.PI / 2 + wFrac * Math.PI * 2)
+        ctx.strokeStyle = wReady ? '#f2d489' : '#e8b84b'
+        ctx.lineWidth = 3
+        ctx.stroke()
+        drawWeaponSmall(ctx, CHARACTERS[characterRef.current].weapon, gx, gy, g.t)
+        ctx.fillStyle = 'rgba(245,236,216,0.7)'
+        ctx.font = '700 11px "Bodoni Moda", serif'
+        ctx.textAlign = 'center'
+        ctx.fillText('F', gx, gy + 30)
+        ctx.restore()
+      }
+
       drawBanner(ctx, g)
       ctx.restore()
     }
@@ -1802,9 +2052,30 @@ export default function Game() {
         {muted ? '🔇' : '🔊'}
       </button>
 
+      {isTouch && phase === 'running' && (
+        <button
+          ref={actionBtnRef}
+          className="action-btn"
+          onTouchStart={(e) => {
+            e.stopPropagation()
+            doAttack()
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation()
+            doAttack()
+          }}
+          aria-label="Attack"
+          title="Attack"
+        >
+          {CHARACTERS[character].icon}
+        </button>
+      )}
+
       {showHint && phase === 'running' && (
         <div className="tap-hint">
-          {isTouch ? 'Tap to jump · Swipe down to slide' : 'Space to jump · ↓ to slide'}
+          {isTouch
+            ? 'Tap to jump · swipe down to slide · ⚔ to attack'
+            : 'Space jump · ↓ slide · F attack'}
         </div>
       )}
 
@@ -1815,18 +2086,46 @@ export default function Game() {
             The Maestro's <span className="amp">Run</span>
           </h1>
           <p className="subtitle">
-            Conduct your way down the Mall. Catch the music <i>on the beat</i> to
-            build your combo, leap the rivals, and slide under the banners.
+            Catch the music <i>on the beat</i> to build your combo, leap the
+            rivals or knock them flat with your weapon, and slide under the banners.
           </p>
+
+          <div className="char-pick-label">Choose your fighter</div>
+          <div
+            className="char-select"
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+          >
+            {CHARACTER_ORDER.map((id) => (
+              <button
+                key={id}
+                type="button"
+                className={`char-card${character === id ? ' sel' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  chooseCharacter(id)
+                }}
+                aria-pressed={character === id}
+              >
+                <span className="char-stage">
+                  <img src={CHAR_IMG[id]} alt="" className="char-img" />
+                  <span className="char-icon">{CHARACTERS[id].icon}</span>
+                </span>
+                <span className="char-name">{CHARACTERS[id].name}</span>
+                <span className="char-weapon">{CHARACTERS[id].weaponName}</span>
+              </button>
+            ))}
+          </div>
+
           <button className="cta" onClick={(e) => { e.stopPropagation(); startGame() }}>
             ▸ Take the Podium
           </button>
           <p className="hint-input">
             {isTouch ? (
-              <>Tap to jump · swipe down to slide</>
+              <>Tap to jump · swipe to slide · ⚔ button to attack</>
             ) : (
               <>
-                <b>Space</b> jump · <b>↓</b> slide · <b>M</b> mute
+                <b>Space</b> jump · <b>↓</b> slide · <b>F</b> attack · <b>M</b> mute
               </>
             )}
           </p>

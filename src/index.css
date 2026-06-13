@@ -446,6 +446,163 @@ body {
   font-style: normal;
 }
 
+/* ---- Character select: Mortal-Kombat-style bouncing fighters ---- */
+.char-pick-label {
+  font-family: 'Bodoni Moda', serif;
+  text-transform: uppercase;
+  letter-spacing: 0.34em;
+  padding-left: 0.34em;
+  font-size: clamp(9px, 2vw, 13px);
+  color: var(--gold);
+  margin-top: clamp(8px, 2vh, 18px);
+}
+
+.char-select {
+  display: flex;
+  gap: clamp(8px, 2.2vw, 18px);
+  margin-top: clamp(8px, 1.6vh, 14px);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.char-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.18em;
+  width: clamp(82px, 21vw, 118px);
+  padding: 0.55em 0.5em 0.7em;
+  border-radius: 14px;
+  background: rgba(13, 19, 48, 0.4);
+  border: 1.5px solid rgba(245, 236, 216, 0.16);
+  color: var(--cream);
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.2s ease, background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.char-card:hover {
+  border-color: rgba(232, 184, 75, 0.55);
+}
+
+.char-card.sel {
+  border-color: var(--gold);
+  background: rgba(232, 184, 75, 0.16);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow:
+    0 0 0 1px var(--gold) inset,
+    0 14px 34px -12px rgba(232, 184, 75, 0.7);
+}
+
+/* the bobbing "fighter" stage */
+.char-stage {
+  position: relative;
+  width: clamp(54px, 14vw, 80px);
+  height: clamp(54px, 14vw, 80px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* spotlight pool under each fighter */
+.char-stage::before {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  width: 70%;
+  height: 12%;
+  transform: translateX(-50%);
+  background: radial-gradient(closest-side, rgba(232, 184, 75, 0.5), transparent);
+  filter: blur(1px);
+}
+
+.char-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 5px 7px rgba(0, 0, 0, 0.45));
+  transform-origin: 50% 100%;
+  animation: fighterIdle 0.62s ease-in-out infinite alternate;
+}
+/* stagger so the three aren't bobbing in lockstep */
+.char-card:nth-child(2) .char-img { animation-delay: -0.21s; }
+.char-card:nth-child(3) .char-img { animation-delay: -0.4s; }
+/* the chosen fighter gets hyped up */
+.char-card.sel .char-img {
+  animation-name: fighterFight;
+  animation-duration: 0.4s;
+}
+
+.char-icon {
+  position: absolute;
+  top: -6px;
+  right: -2px;
+  font-size: clamp(18px, 4.6vw, 26px);
+  line-height: 1;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+  animation: weaponBob 0.7s ease-in-out infinite;
+}
+.char-card:nth-child(2) .char-icon { animation-delay: -0.25s; }
+.char-card:nth-child(3) .char-icon { animation-delay: -0.45s; }
+
+.char-name {
+  font-family: 'Bodoni Moda', serif;
+  font-weight: 800;
+  font-size: clamp(14px, 3vw, 18px);
+  letter-spacing: 0.04em;
+  margin-top: 0.2em;
+}
+
+.char-weapon {
+  font-family: 'Spectral', serif;
+  font-style: italic;
+  font-size: clamp(10px, 2.2vw, 12px);
+  color: var(--cream-dim);
+}
+
+@keyframes fighterIdle {
+  0% { transform: translateY(1px) rotate(-3deg); }
+  100% { transform: translateY(-9px) rotate(3deg); }
+}
+
+@keyframes fighterFight {
+  0% { transform: translateY(2px) rotate(-5deg) scale(1.02); }
+  100% { transform: translateY(-15px) rotate(5deg) scale(1.08); }
+}
+
+@keyframes weaponBob {
+  0%, 100% { transform: translateY(0) rotate(-14deg) scale(1); }
+  50% { transform: translateY(-7px) rotate(14deg) scale(1.14); }
+}
+
+/* ---- Attack button (mobile) ---- */
+.action-btn {
+  position: absolute;
+  z-index: 6;
+  left: 14px;
+  bottom: 14px;
+  width: 62px;
+  height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  line-height: 1;
+  border: 1.5px solid rgba(232, 184, 75, 0.5);
+  border-radius: 999px;
+  background: rgba(13, 19, 48, 0.5);
+  color: var(--cream);
+  cursor: pointer;
+  backdrop-filter: blur(2px);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.08s ease, opacity 0.15s linear;
+}
+
+.action-btn:active {
+  transform: scale(0.9);
+}
+
 /* ---- Mute toggle ---- */
 .mute-btn {
   position: absolute;
