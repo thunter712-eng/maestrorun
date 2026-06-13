@@ -70,7 +70,7 @@ const KINDS = {
 // NOTE: the character id doubles as its image key in imagesRef.
 const CHARACTERS = {
   john: { name: 'John', weapon: 'soccer', weaponName: 'Soccer kick', icon: '⚽' },
-  brent: { name: 'Brent', weapon: 'tennis', weaponName: 'Tennis serve', icon: '🎾' },
+  brent: { name: 'Brent', weapon: 'eraser', weaponName: 'Chalk eraser', icon: '🧽' },
   dan: { name: 'Dan', weapon: 'trombone', weaponName: 'Trombone whack', icon: '🎺' },
 }
 const CHARACTER_ORDER = ['john', 'brent', 'dan']
@@ -612,26 +612,35 @@ function drawSoccerBall(ctx, x, y, r, rot) {
   ctx.restore()
 }
 
-function drawTennisBall(ctx, x, y, r, rot) {
+// A chalkboard eraser: wooden top, felt base, chalk streaks + a little dust.
+function drawEraser(ctx, x, y, r, rot) {
   ctx.save()
   ctx.translate(x, y)
-  ctx.rotate(rot)
-  const g = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.2, 0, 0, r)
-  g.addColorStop(0, '#e8f36b')
-  g.addColorStop(1, '#b6d22a')
-  ctx.fillStyle = g
-  ctx.beginPath()
-  ctx.arc(0, 0, r, 0, Math.PI * 2)
+  ctx.rotate(rot * 0.5) // tumbles slower than a ball
+  const w = r * 2.3
+  const h = r * 1.35
+  // felt base (light)
+  ctx.fillStyle = '#ece7d8'
+  roundRect(ctx, -w / 2, -h / 2, w, h, 3)
   ctx.fill()
-  ctx.strokeStyle = '#f7fae8'
-  ctx.lineWidth = r * 0.18
-  ctx.lineCap = 'round'
-  ctx.beginPath()
-  ctx.arc(-r * 1.15, 0, r * 1.35, -0.7, 0.7)
+  // wooden top half
+  ctx.fillStyle = '#7a4a24'
+  roundRect(ctx, -w / 2, -h / 2, w, h * 0.5, 3)
+  ctx.fill()
+  ctx.strokeStyle = 'rgba(0,0,0,0.3)'
+  ctx.lineWidth = 1
+  roundRect(ctx, -w / 2, -h / 2, w, h, 3)
   ctx.stroke()
-  ctx.beginPath()
-  ctx.arc(r * 1.15, 0, r * 1.35, Math.PI - 0.7, Math.PI + 0.7)
-  ctx.stroke()
+  // chalk streaks across the felt
+  ctx.strokeStyle = 'rgba(255,255,255,0.85)'
+  ctx.lineWidth = 1.3
+  for (let i = -1; i <= 1; i++) {
+    const yy = h * 0.14 + i * 3
+    ctx.beginPath()
+    ctx.moveTo(-w / 2 + 3, yy)
+    ctx.lineTo(w / 2 - 3, yy)
+    ctx.stroke()
+  }
   ctx.restore()
 }
 
@@ -667,7 +676,7 @@ function drawTrombone(ctx, x, y, prog, scale = 1) {
 
 function drawWeaponSmall(ctx, weapon, x, y, t) {
   if (weapon === 'soccer') drawSoccerBall(ctx, x, y, 10, t * 2)
-  else if (weapon === 'tennis') drawTennisBall(ctx, x, y, 9, t * 2)
+  else if (weapon === 'eraser') drawEraser(ctx, x, y, 7, t * 2)
   else drawTrombone(ctx, x - 6, y, 0.5, 0.42)
 }
 
@@ -807,7 +816,7 @@ export default function Game() {
       floats: [], // score popups
       // weapons: the two characters you didn't pick are your rivals
       rivals: CHARACTER_ORDER.filter((c) => c !== characterRef.current),
-      projectiles: [], // soccer / tennis balls in flight
+      projectiles: [], // soccer balls / chalk erasers in flight
       weaponReadyAt: 0, // g.t at which you can attack again
       meleeSwing: 0, // trombone swing animation timer
       meleePending: false, // a melee whack to resolve this frame
@@ -1491,7 +1500,7 @@ export default function Game() {
           }
         }
       }
-      // projectiles (soccer / tennis) fly forward and knock the first rival hit
+      // projectiles (soccer / eraser) fly forward and knock the first rival hit
       for (const pr of g.projectiles) {
         pr.x += pr.vx * dt
         pr.rot += dt * 16
@@ -1868,7 +1877,7 @@ export default function Game() {
       // projectiles in flight (behind the player)
       for (const pr of g.projectiles) {
         if (pr.kind === 'soccer') drawSoccerBall(ctx, pr.x, pr.y, 14, pr.rot)
-        else drawTennisBall(ctx, pr.x, pr.y, 12, pr.rot)
+        else drawEraser(ctx, pr.x, pr.y, 11, pr.rot)
       }
 
       // player
