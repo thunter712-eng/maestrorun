@@ -545,6 +545,11 @@ body {
 }
 .char-card:nth-child(2) .char-icon { animation-delay: -0.25s; }
 .char-card:nth-child(3) .char-icon { animation-delay: -0.45s; }
+/* Brent's eraser reads better as a black block; keep a light halo so it stays
+   visible against the dark card. */
+.char-brent .char-icon {
+  filter: brightness(0) drop-shadow(0 0 2px rgba(245, 236, 216, 0.9));
+}
 
 .char-name {
   font-family: 'Bodoni Moda', serif;

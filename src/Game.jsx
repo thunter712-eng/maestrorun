@@ -2109,7 +2109,7 @@ export default function Game() {
               <button
                 key={id}
                 type="button"
-                className={`char-card${character === id ? ' sel' : ''}`}
+                className={`char-card char-${id}${character === id ? ' sel' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation()
                   chooseCharacter(id)
