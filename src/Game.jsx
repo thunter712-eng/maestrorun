@@ -727,6 +727,7 @@ export default function Game() {
 
   const [leaderboard, setLeaderboard] = useState([])
   const [entering, setEntering] = useState(false) // awaiting initials input
+  const [showAllScores, setShowAllScores] = useState(false) // expand the board
   const [initials, setInitials] = useState('')
   const [initialsError, setInitialsError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -874,6 +875,7 @@ export default function Game() {
     setInitialsError('')
     enteringRef.current = qual
     setEntering(qual)
+    setShowAllScores(false) // start collapsed to the podium each time
     setShowHint(false)
     setPhase('gameover')
   }
@@ -2191,18 +2193,42 @@ export default function Game() {
             </div>
           ) : (
             <>
-              {leaderboard.length > 0 && (
-                <ol className="leaderboard">
-                  {leaderboard.map((row, i) => (
-                    <li key={i} className={row.score === finalScore ? 'me' : ''}>
-                      <span className="lb-rank">{i + 1}</span>
-                      <span className="lb-ini">{row.initials}</span>
-                      <span className="lb-dots" />
-                      <span className="lb-score">{row.score}</span>
-                    </li>
-                  ))}
-                </ol>
-              )}
+              {leaderboard.length > 0 &&
+                (() => {
+                  const meIndex = leaderboard.findIndex((r) => r.score === finalScore)
+                  const rows = showAllScores ? leaderboard : leaderboard.slice(0, 3)
+                  return (
+                    <>
+                      <div className="lb-title">
+                        {showAllScores ? 'High Scores' : 'On the Program'}
+                      </div>
+                      <ol className="leaderboard">
+                        {rows.map((row, i) => (
+                          <li key={i} className={i === meIndex ? 'me' : ''}>
+                            <span className="lb-rank">{i + 1}</span>
+                            <span className="lb-ini">{row.initials}</span>
+                            <span className="lb-dots" />
+                            <span className="lb-score">{row.score}</span>
+                            {i === meIndex && <span className="lb-you">◀ you</span>}
+                          </li>
+                        ))}
+                      </ol>
+                      {leaderboard.length > 3 && (
+                        <button
+                          className="lb-toggle"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setShowAllScores((v) => !v)
+                          }}
+                        >
+                          {showAllScores
+                            ? '▴ Show top 3'
+                            : `▾ View all ${leaderboard.length} scores`}
+                        </button>
+                      )}
+                    </>
+                  )
+                })()}
               <button
                 className="cta"
                 onClick={(e) => {

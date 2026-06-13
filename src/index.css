@@ -397,6 +397,49 @@ body {
   color: var(--cream);
 }
 
+.lb-you {
+  font-family: 'Bodoni Moda', serif;
+  font-size: clamp(10px, 2.2vw, 13px);
+  letter-spacing: 0.04em;
+  color: var(--gold);
+  white-space: nowrap;
+  margin-left: 0.4em;
+}
+
+.lb-title {
+  font-family: 'Bodoni Moda', serif;
+  text-transform: uppercase;
+  letter-spacing: 0.34em;
+  padding-left: 0.34em;
+  font-size: clamp(9px, 2vw, 12px);
+  color: var(--gold);
+  margin-top: 0.8em;
+}
+
+/* "View all / Show top 3" expander — quiet text button, not a big CTA. */
+.lb-toggle {
+  margin-top: 0.5em;
+  font-family: 'Bodoni Moda', serif;
+  font-size: clamp(11px, 2.4vw, 14px);
+  letter-spacing: 0.06em;
+  color: var(--gold-soft);
+  background: none;
+  border: none;
+  padding: 0.3em 0.6em;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.lb-toggle:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.lb-toggle:active {
+  transform: translateY(0);
+}
+
 .cta {
   margin-top: clamp(18px, 4vw, 30px);
   font-family: 'Bodoni Moda', serif;
