@@ -2179,14 +2179,14 @@ export default function Game() {
               />
               {initialsError && <div className="entry-error">{initialsError}</div>}
               <button
-                className="cta"
+                className={`cta${submitting ? ' submitting' : ''}`}
                 disabled={submitting}
                 onClick={(e) => {
                   e.stopPropagation()
                   submitInitials()
                 }}
               >
-                {submitting ? '…' : '✓ Take a Bow'}
+                {submitting ? '♫ Recording your score…' : '✓ Take a Bow'}
               </button>
             </div>
           ) : (

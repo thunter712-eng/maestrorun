@@ -433,6 +433,29 @@ body {
   transform: none;
 }
 
+/* While the score uploads: a soft metronome breathe + shimmer, instead of a
+   plain disabled look. */
+.cta.submitting {
+  opacity: 1;
+  animation: scoreBreathe 0.92s ease-in-out infinite;
+  letter-spacing: 0.06em;
+}
+
+@keyframes scoreBreathe {
+  0%, 100% {
+    transform: scale(0.99);
+    box-shadow:
+      0 10px 30px -8px rgba(232, 184, 75, 0.5),
+      0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow:
+      0 16px 44px -8px rgba(232, 184, 75, 0.85),
+      0 0 0 1px rgba(255, 255, 255, 0.55) inset;
+  }
+}
+
 .hint-input {
   font-style: italic;
   color: var(--cream-dim);
