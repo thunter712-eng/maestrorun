@@ -839,7 +839,7 @@ body {
     overflow-y: auto;
     touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
-    padding: 5% 6%;
+    padding: clamp(8px, 2.2vh, 18px) 6%;
   }
 
   /* Shrink the biggest vertical space-hogs so the initials input + submit
@@ -856,5 +856,49 @@ body {
   .entry-label,
   .hi-line {
     margin-top: 0.5em;
+  }
+
+  /* ---- Ready screen: the title + subtitle + fighter row must all fit a short
+     landscape phone (it can't scroll — any tap starts the game). Compact
+     everything, sized by viewport height. ---- */
+  .kicker {
+    margin-bottom: 0.3em;
+  }
+
+  .title {
+    font-size: clamp(28px, 9vh, 56px);
+  }
+
+  .subtitle {
+    font-size: clamp(11px, 2.5vh, 15px);
+    margin-top: 0.4em;
+    max-width: 48ch;
+  }
+
+  .char-pick-label {
+    margin-top: clamp(4px, 1.2vh, 10px);
+  }
+
+  .char-select {
+    margin-top: clamp(4px, 1vh, 8px);
+    gap: clamp(6px, 1.6vw, 14px);
+  }
+
+  .char-card {
+    width: clamp(72px, 17vw, 104px);
+    padding: 0.4em 0.45em 0.55em;
+  }
+
+  .char-stage {
+    width: clamp(42px, 9vh, 64px);
+    height: clamp(42px, 9vh, 64px);
+  }
+
+  .cta {
+    margin-top: clamp(8px, 1.8vh, 18px);
+  }
+
+  .hint-input {
+    margin-top: 0.6em;
   }
 }
